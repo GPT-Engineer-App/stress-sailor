@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Cat, Heart, Info, Paw, Star } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import confetti from 'canvas-confetti';
 
 const catFacts = [
   "Cats sleep for about 70% of their lives.",
@@ -12,91 +14,100 @@ const catFacts = [
   "Cats have over 20 vocalizations, including the purr.",
   "The first cat in space was French. Her name was Felicette.",
   "Cats can jump up to six times their length.",
+  "A cat's nose print is unique, like a human's fingerprint.",
+  "Cats can rotate their ears 180 degrees.",
+  "The first cat show was held in 1871 at the Crystal Palace in London.",
 ];
 
 const Index = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [currentFactIndex, setCurrentFactIndex] = useState(0);
   const [showAlert, setShowAlert] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const headerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: headerRef,
+    offset: ["start start", "end start"]
+  });
+
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentFactIndex((prevIndex) => (prevIndex + 1) % catFacts.length);
-    }, 5000);
+      setProgress(0);
+    }, 8000);
 
-    return () => clearInterval(interval);
+    const progressInterval = setInterval(() => {
+      setProgress((prevProgress) => Math.min(prevProgress + 1, 100));
+    }, 80);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(progressInterval);
+    };
   }, []);
 
   const handleLike = () => {
     setLikeCount((prev) => prev + 1);
     setShowAlert(true);
     setTimeout(() => setShowAlert(false), 2000);
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100">
-      <header className="bg-purple-600 text-white py-20 px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 overflow-x-hidden">
+      <header ref={headerRef} className="h-screen flex items-center justify-center relative overflow-hidden">
+        <motion.div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')",
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+            y: backgroundY
+          }}
+        />
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <motion.h1 
-            className="text-7xl font-bold mb-6"
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            className="text-8xl font-bold mb-6 text-white drop-shadow-lg"
+            style={{ y: textY }}
           >
             Feline Fascination
           </motion.h1>
           <motion.p 
-            className="text-2xl"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-3xl text-white drop-shadow-md"
+            style={{ y: textY }}
           >
             Discover the enchanting world of cats
           </motion.p>
         </div>
-        <motion.div 
-          className="absolute top-0 left-0 w-full h-full"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.1 }}
-          transition={{ duration: 1 }}
-        >
-          {[...Array(20)].map((_, i) => (
-            <Paw 
-              key={i} 
-              className="text-white absolute" 
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                transform: `rotate(${Math.random() * 360}deg)`,
-                opacity: Math.random() * 0.5 + 0.5,
-              }}
-            />
-          ))}
-        </motion.div>
       </header>
       
       <main className="max-w-6xl mx-auto py-16 px-8">
-        <motion.div 
-          className="relative mb-16"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="relative mb-16 overflow-hidden rounded-lg shadow-2xl">
           <img 
             src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/1200px-Cat03.jpg" 
             alt="Adorable cat" 
-            className="mx-auto object-cover w-full h-[500px] rounded-lg shadow-lg"
+            className="w-full h-[600px] object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60" />
           <motion.div 
-            className="absolute bottom-4 left-4 bg-white bg-opacity-80 p-4 rounded-lg max-w-md"
-            initial={{ x: -100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
+            className="absolute bottom-8 left-8 right-8 bg-white bg-opacity-90 p-6 rounded-lg"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <h3 className="text-lg font-semibold mb-2">Did you know?</h3>
+            <h3 className="text-2xl font-semibold mb-4">Did you know?</h3>
             <AnimatePresence mode="wait">
               <motion.p
                 key={currentFactIndex}
+                className="text-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -105,17 +116,18 @@ const Index = () => {
                 {catFacts[currentFactIndex]}
               </motion.p>
             </AnimatePresence>
+            <Progress value={progress} className="mt-4" />
           </motion.div>
-        </motion.div>
+        </div>
         
-        <div className="text-center mb-12">
+        <div className="text-center mb-16">
           <Button 
             variant="outline" 
             size="lg" 
             onClick={handleLike}
-            className="group relative"
+            className="group relative text-2xl py-8 px-12 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white border-none hover:from-pink-600 hover:to-purple-600 transition-all duration-300"
           >
-            <Heart className="mr-2 h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-colors" />
+            <Heart className="mr-3 h-8 w-8 text-white group-hover:scale-110 transition-transform" />
             Like this cat! ({likeCount})
             <AnimatePresence>
               {showAlert && (
@@ -123,11 +135,11 @@ const Index = () => {
                   initial={{ opacity: 0, scale: 0.8, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2"
+                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4"
                 >
-                  <Alert className="w-48">
-                    <Star className="h-4 w-4" />
-                    <AlertTitle>Thanks for the love!</AlertTitle>
+                  <Alert className="w-64 bg-gradient-to-r from-yellow-400 to-orange-500 border-none text-white">
+                    <Star className="h-5 w-5" />
+                    <AlertTitle className="text-lg">Thanks for the love!</AlertTitle>
                     <AlertDescription>This cat appreciates you.</AlertDescription>
                   </Alert>
                 </motion.div>
@@ -137,9 +149,9 @@ const Index = () => {
         </div>
 
         <Tabs defaultValue="characteristics" className="mb-12">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="characteristics">Characteristics</TabsTrigger>
-            <TabsTrigger value="breeds">Popular Breeds</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="characteristics" className="text-lg py-3">Characteristics</TabsTrigger>
+            <TabsTrigger value="breeds" className="text-lg py-3">Popular Breeds</TabsTrigger>
           </TabsList>
           <TabsContent value="characteristics">
             <motion.div
@@ -147,16 +159,16 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Card>
+              <Card className="bg-gradient-to-br from-purple-100 to-pink-100 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Info className="mr-2 h-6 w-6" />
+                  <CardTitle className="flex items-center text-3xl text-purple-800">
+                    <Info className="mr-3 h-8 w-8" />
                     Characteristics of Cats
                   </CardTitle>
-                  <CardDescription>What makes cats truly special?</CardDescription>
+                  <CardDescription className="text-lg text-purple-600">What makes cats truly special?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[
                       "Independent yet affectionate nature",
                       "Exceptional hunters with razor-sharp instincts",
@@ -166,13 +178,13 @@ const Index = () => {
                     ].map((characteristic, index) => (
                       <motion.li 
                         key={index}
-                        className="flex items-center bg-purple-100 p-3 rounded-lg"
+                        className="flex items-center bg-white p-4 rounded-lg shadow-md"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <Paw className="mr-2 h-5 w-5 text-purple-600" />
-                        {characteristic}
+                        <Paw className="mr-3 h-6 w-6 text-purple-600" />
+                        <span className="text-lg">{characteristic}</span>
                       </motion.li>
                     ))}
                   </ul>
@@ -186,16 +198,16 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Card>
+              <Card className="bg-gradient-to-br from-pink-100 to-purple-100 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Cat className="mr-2 h-6 w-6" />
+                  <CardTitle className="flex items-center text-3xl text-pink-800">
+                    <Cat className="mr-3 h-8 w-8" />
                     Popular Cat Breeds
                   </CardTitle>
-                  <CardDescription>Explore some of the world's most beloved cat breeds</CardDescription>
+                  <CardDescription className="text-lg text-pink-600">Explore some of the world's most beloved cat breeds</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ul className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <ul className="grid grid-cols-2 md:grid-cols-3 gap-8">
                     {[
                       { name: "Siamese", image: "https://upload.wikimedia.org/wikipedia/commons/2/25/Siam_lilacpoint.jpg" },
                       { name: "Persian", image: "https://upload.wikimedia.org/wikipedia/commons/1/15/White_Persian_Cat.jpg" },
@@ -211,8 +223,10 @@ const Index = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <img src={breed.image} alt={breed.name} className="w-32 h-32 rounded-full mb-2 object-cover shadow-lg" />
-                        <span className="font-semibold">{breed.name}</span>
+                        <div className="relative w-48 h-48 mb-4 rounded-full overflow-hidden shadow-lg transform hover:scale-105 transition-transform duration-300">
+                          <img src={breed.image} alt={breed.name} className="absolute inset-0 w-full h-full object-cover" />
+                        </div>
+                        <span className="text-xl font-semibold text-purple-800">{breed.name}</span>
                       </motion.li>
                     ))}
                   </ul>
